@@ -18,12 +18,6 @@ To run this script, you will need the following:-
 5) A **Cloud Scheduler Service Account** to trigger the function on a cron schedule in a secure manner
 
 6) Run **git clone https://github.com/chrisbeckett/gcpd9-autoonboarding-functions.git**
-
-6) Run **python -m venv gcpd9-autoonboarding-functions**
-
-7) Run **scripts\activate.bat** to enable the Python virtual environment
-
-8) Run **pip install -r requirements.txt** to install required Python modules
     
 Setup
 -----
@@ -59,20 +53,55 @@ Prior to deploying the function, you need to add the GCP credentials into **Secr
 
 **Creating the Function**
 
-To run the script locally, you need to set several environment variables which are then read in by the script. This prevents any secret keys being hard coded into the script. Set the following:-
+To create the Cloud Function, follow the steps below:-
 
-- SET AZURE_TENANT_ID=xxxxxxxxxx
-- SET AZURE_CLIENT_ID=xxxxxxxxxxx
-- SET AZURE_CLIENT_SECRET=xxxxxxxxxxxxxxx
+- Go to **Cloud Functions** in the left navigation bar
+- Click **Create Function**
+- Name the function, e.g. **Dome9-Onboarder**
+- Set **Memory Allocated** to **128MB**
+- Leave **Trigger** as the default **HTTP**
+- In the **Source Code** section, either copy and paste the text from the **main.py** file in the repo or upload the **function.zip** file from the repo, same for **requirements.txt**. If using the **ZIP Upload** method, select a **staging bucket** for the upload
+- Set the **Runtime** to be **Python 3.7**
+- Set **Function to execute** to **add_project**
+- Click **Environment variables, Networking, Timeouts and More**
+- In the **Environment** section, click **Add Variable** and add environment variables for the following:-
+    - D9_API_KEY
+    - D9_API_SECRET
+    - GCP_SM_PROJECT_ID - *Security project ID where Secret Manager deployed, e.g. my-security-project-999999*
+    - GCP_SECRET_ID - *Name of secret*
+    - GCP_SECRET_VERSION - *Version number of secret (e.g. 1)*
+- Click **Create**, this will take a few minutes to deploy and shows green when successful in the console
+- Once deployed, the function can be tested by clicking the **Triggers** tab and clicking the trigger URL. The browser response should simply read **OK**. If it does not, check the Service Account IAM permissions.
 
-Running the script
-------------------
-Simply run the script **d9-sizer.py** from the command line 
+**Creating the Cloud Scheduler Job**
 
-Disclaimer
-==========
-This tool is to be used to provide indicative numbers of billable assets in an Azure environment for cost analysis purposes. No warranty implied.
+In order to run the onboarder script on a schedule, we need to create a job in **Cloud Scheduler**, which is basically "cron in the cloud". Perform the steps below:-
 
+- Create a new Service Account for Cloud Scheduler in the security project
+    - Set the **Name** as *SA-Cloud-Scheduler* (or whatever makes sense). **Note the account e-mail address, you will need this later**
+    - Set the **Description** to be *Service Account for HTTP Scheduler* (or whatever)
+    - Click **Create**
+    - Add the **Project Owner** role to the Service Account 
+    - Click **Done**
+   
+- Create a new Cloud Scheduler job by following the steps below:-
+    - Go to **Tools | Cloud Scheduler** in the left navigation bar
+    - Click **Create Job**
+    - Set the Job Name *D9-Onboarder* (or whatever)
+    - Set the optional job **Description**
+    - Set the job **Frequency** in standard Cron format *(e.g. 0 6 * * * will set the job to run at 0600 daily)*
+    - Set the appropriate **Time Zone**
+    - In **Target** settings, set **HTTP**
+    - In the **URL** field, add the URL of the **Cloud Function** you defined earlier
+    - Leave the **HTTP Method** at the default of **POST**
+    - Click **Show More**
+    - Under **Auth header**, select **Add OIDC token**
+    - Under **Service Account**, paste the e-mail address of the **Service Account** created in the step above (SA-Cloud-Scheduler)
+    - Under **Audience**, paste in the **URL of the Cloud Function**
+    - Click **Create**
+    
+The job will take a few seconds to create. Once complete, you can test it manually by clicking **Run Now** and viewing the logs.
 
+    
 
-
+    
