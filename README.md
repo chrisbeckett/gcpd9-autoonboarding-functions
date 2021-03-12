@@ -7,7 +7,7 @@ Pre-requisites
 --------------
 To run this script, you will need the following:-
 
-1) **Python 3.6** (or newer)
+1) **Python 3.8** (or newer)
 
 2) A **GCP Project** into which the Secret Manager and Function will be deployed
 
@@ -61,7 +61,7 @@ To create the Cloud Function, follow the steps below:-
 - Set **Memory Allocated** to **128MB**
 - Leave **Trigger** as the default **HTTP**
 - In the **Source Code** section, either copy and paste the text from the **main.py** file in the repo or upload the **function.zip** file from the repo, same for **requirements.txt**. If using the **ZIP Upload** method, select a **staging bucket** for the upload
-- Set the **Runtime** to be **Python 3.7**
+- Set the **Runtime** to be **Python 3.8**
 - Set **Function to execute** to **add_project**
 - Click **Environment variables, Networking, Timeouts and More**
 - In the **Environment** section, click **Add Variable** and add environment variables for the following:-
